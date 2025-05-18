@@ -20,12 +20,6 @@ class OnboardingViewModel(): ViewModel() {
         "Геймдизайн", "Веб-дизайн", "Cinema 4D", "Промпт инжениринг",
         "Webflow", "Three.js", "Парсинг", "Python-разработка"
     )
-/*    private val randomAngle = if ((0..1).random() == 0) 30f else -30f
-    private val rotateAnimation by animateFloatAsState(
-        targetValue = if (isRotated) randomAngle else 0f,
-        animationSpec = tween(durationMillis = 400),
-        label = "rotate_$course",
-    )*/
 
     init {
         loadCourses()
@@ -52,11 +46,11 @@ class OnboardingViewModel(): ViewModel() {
         }
     }
 
-    fun animate(course: String) {
-        val rotation = !_uiState.value.coursesRotation.getOrDefault(course, false)
+    fun changeRotateState(course: String) {
+        val rotation = !_uiState.value.rotateStates.getOrDefault(course, false)
         _uiState.update { currentState ->
             currentState.copy(
-                coursesRotation = currentState.coursesRotation + (course to rotation)
+                rotateStates = currentState.rotateStates + (course to rotation)
             )
         }
     }
@@ -64,7 +58,7 @@ class OnboardingViewModel(): ViewModel() {
 
 data class OnboardingUiState(
     val courses: List<String> = emptyList(),
-    val coursesRotation: Map<String, Boolean> = emptyMap(),
+    val rotateStates: Map<String, Boolean> = emptyMap(),
     val isLoading: Boolean = false,
     val error: String? = null
 )
