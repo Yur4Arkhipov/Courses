@@ -1,4 +1,4 @@
-package com.example.courses.presentation
+package com.example.courses.presentation.onboarding
 
 import android.content.res.Configuration
 import androidx.compose.animation.core.animateFloatAsState
@@ -18,6 +18,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -38,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.courses.R
+import com.example.courses.UiState
 import com.example.courses.ui.theme.CoursesTheme
 
 @Composable
@@ -79,48 +81,61 @@ fun CoursesFlowCard(viewModel: OnboardingViewModel) {
     val uiState by viewModel.uiState.collectAsState()
     val scrollState = rememberScrollState()
 
-    FlowRow(
-        modifier = Modifier
-            .fillMaxWidth()
-            .horizontalScroll(scrollState),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        maxItemsInEachRow = 4,
-    ) {
-        uiState.courses.forEach { course ->
-            val isRotated = uiState.rotatedCourses[course] != 0f
-            val rotateAnimation by animateFloatAsState(
-                targetValue = uiState.rotatedCourses[course] ?: 0f,
-                animationSpec = tween(durationMillis = 400),
-                label = "rotate_$course",
+    when(uiState) {
+        is UiState.Idle -> Text("Idle state")
+        is UiState.Loading -> CircularProgressIndicator()
+        is UiState.Error -> {
+            Text(
+                text = (uiState as UiState.Error).message,
+                color = Color.Red
             )
-
-            OutlinedButton(
-                onClick = {
-                    viewModel.changeRotateState(course)
-                },
-                shape = RoundedCornerShape(20.dp),
-                contentPadding = PaddingValues(horizontal = 24.dp, vertical = 24.dp),
-                colors = ButtonColors(
-                    contentColor = Color.White,
-                    containerColor = if (isRotated) Color(0x32333A4D) else Color(
-                        0x12B956FF
-                    ),
-                    disabledContainerColor = Color.Red,
-                    disabledContentColor = Color.Red
-                ),
-                border = null,
+        }
+        is UiState.Success -> {
+            val data = (uiState as UiState.Success<OnboardingData>).data
+            FlowRow(
                 modifier = Modifier
-                    .rotate(rotateAnimation)
-                    .graphicsLayer(
-                        renderEffect = BlurEffect(
-                            radiusX = 0.21f,
-                            radiusY = 0.21f,
-                            edgeTreatment = TileMode.Decal
-                        )
-                    )
+                    .fillMaxWidth()
+                    .horizontalScroll(scrollState),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                maxItemsInEachRow = 4,
             ) {
-                Text(text = course)
+                data.courses.forEach { course ->
+                    val isRotated = (data.rotatedCourses[course] ?: 0f) != 0f
+                    val rotateAnimation by animateFloatAsState(
+                        targetValue = data.rotatedCourses[course] ?: 0f,
+                        animationSpec = tween(durationMillis = 400),
+                        label = "rotate_$course",
+                    )
+
+                    OutlinedButton(
+                        onClick = {
+                            viewModel.changeRotateState(course)
+                        },
+                        shape = RoundedCornerShape(20.dp),
+                        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 24.dp),
+                        colors = ButtonColors(
+                            contentColor = Color.White,
+                            containerColor = if (isRotated) Color(0x32333A4D) else Color(
+                                0x12B956FF
+                            ),
+                            disabledContainerColor = Color.Red,
+                            disabledContentColor = Color.Red
+                        ),
+                        border = null,
+                        modifier = Modifier
+                            .rotate(rotateAnimation)
+                            .graphicsLayer(
+                                renderEffect = BlurEffect(
+                                    radiusX = 0.21f,
+                                    radiusY = 0.21f,
+                                    edgeTreatment = TileMode.Decal
+                                )
+                            )
+                    ) {
+                        Text(text = course)
+                    }
+                }
             }
         }
     }

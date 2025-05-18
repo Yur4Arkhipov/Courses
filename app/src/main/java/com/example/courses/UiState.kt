@@ -1,4 +1,4 @@
-package com.example.courses.presentation
+package com.example.courses
 
 sealed class UiState<out T> {
     object Idle : UiState<Nothing>()
