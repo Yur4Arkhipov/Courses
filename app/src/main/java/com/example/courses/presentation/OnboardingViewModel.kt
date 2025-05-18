@@ -47,10 +47,12 @@ class OnboardingViewModel(): ViewModel() {
     }
 
     fun changeRotateState(course: String) {
-        val rotation = !_uiState.value.rotateStates.getOrDefault(course, false)
         _uiState.update { currentState ->
+            val currentAngle = currentState.rotatedCourses[course] ?: 0f
+            val randomAngle = if ((0..1).random() == 0) 30f else -30f
+            val newAngle = if(currentAngle == 0f) randomAngle else 0f
             currentState.copy(
-                rotateStates = currentState.rotateStates + (course to rotation)
+                rotatedCourses = currentState.rotatedCourses + (course to newAngle)
             )
         }
     }
@@ -58,7 +60,7 @@ class OnboardingViewModel(): ViewModel() {
 
 data class OnboardingUiState(
     val courses: List<String> = emptyList(),
-    val rotateStates: Map<String, Boolean> = emptyMap(),
+    val rotatedCourses: Map<String, Float> = emptyMap(),
     val isLoading: Boolean = false,
     val error: String? = null
 )

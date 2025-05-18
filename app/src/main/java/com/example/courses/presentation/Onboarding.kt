@@ -24,7 +24,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
@@ -89,10 +88,9 @@ fun CoursesFlowCard(viewModel: OnboardingViewModel) {
         maxItemsInEachRow = 4,
     ) {
         uiState.courses.forEach { course ->
-            val isRotated = uiState.rotateStates[course] == true
-            val randomAngle = remember(course) { if ((0..1).random() == 0) 30f else -30f }
+            val isRotated = uiState.rotatedCourses[course] != 0f
             val rotateAnimation by animateFloatAsState(
-                targetValue = if (isRotated) randomAngle else 0f,
+                targetValue = uiState.rotatedCourses[course] ?: 0f,
                 animationSpec = tween(durationMillis = 400),
                 label = "rotate_$course",
             )
