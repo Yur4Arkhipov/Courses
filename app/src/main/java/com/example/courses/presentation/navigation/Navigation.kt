@@ -39,7 +39,7 @@ fun Navigation() {
             startDestination = TopLevelRoutes.Home,
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable<TopLevelRoutes.Home> { HomeScreen(modifier = Modifier.padding(innerPadding)) }
+            composable<TopLevelRoutes.Home> { HomeScreen(innerPadding = innerPadding) }
             composable<TopLevelRoutes.Favorites> { FavoritesScreen() }
             composable<TopLevelRoutes.Profile> { ProfileScreen() }
         }

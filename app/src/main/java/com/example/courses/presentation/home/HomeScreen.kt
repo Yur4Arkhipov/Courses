@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,7 +16,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -25,6 +29,7 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -38,7 +43,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.courses.R
+import com.example.courses.UiState
+import com.example.courses.data.model.CourseCardDto
 import com.example.courses.ui.theme.CoursesTheme
 import com.example.courses.ui.theme.Glass
 
@@ -47,90 +55,141 @@ import com.example.courses.ui.theme.Glass
 @Composable
 fun HomeScreen(
     modifier: Modifier = Modifier,
-//    viewModel: HomeScreenViewModel: HiltViewModel
+    innerPadding: PaddingValues,
+    viewModel: HomeScreenViewModel = hiltViewModel()
 ) {
+    val state = viewModel.uiState.collectAsState().value
+    val combinedPadding = PaddingValues(
+        top = innerPadding.calculateTopPadding(),
+        bottom = 0.dp,
+        start = 20.dp,
+        end = 20.dp
+    )
+
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = 20.dp)
+            .padding(combinedPadding)
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
-        ) {
-            OutlinedTextField(
-                value = "",
-                enabled = false,
-                onValueChange = { },
-                placeholder = {
-                    Text(
-                        text = "Search courses...",
-                        fontSize = 14.sp,
-                        letterSpacing = 0.25.sp
-                    )
-                },
-                leadingIcon = {
-                    Image(
-                        painter = painterResource(R.drawable.ic_search),
-                        contentDescription = null,
-                        modifier = Modifier.size(25.dp)
-                    )
-                },
-                singleLine = true,
-                shape = RoundedCornerShape(28.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    disabledContainerColor = MaterialTheme.colorScheme.surface,
-                    disabledBorderColor = Color.Transparent,
-                ),
-                modifier = Modifier
-                    .weight(1f)
-                    .height(56.dp)
-            )
-            Spacer(Modifier.width(10.dp))
-            IconButton(
-                onClick = {  },
-                enabled = false,
-                modifier = Modifier
-                    .size(56.dp)
-                    .background(
-                        color = MaterialTheme.colorScheme.surface,
-                        shape = RoundedCornerShape(28.dp)
-                    )
-                    .clip(RoundedCornerShape(30.dp))
-            ) {
-                Image(
-                    painter = painterResource(R.drawable.ic_filter),
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp)
-                )
+        SearchBar()
+        Spacer(Modifier.height(15.dp))
+        FilterBar()
+        Spacer(Modifier.height(15.dp))
+        when(state) {
+            is UiState.Loading -> {
+                Box(modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
             }
+            is UiState.Success -> {
+                val courses = state.data
+
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(15.dp)
+                ) {
+                    items(courses) { course ->
+                        CourseCard(course)
+                    }
+                }
+            }
+            is UiState.Error -> {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    Text(
+                        state.message,
+                        color = Color.Red
+                    )
+                }
+            }
+            else -> Unit
         }
-        Spacer(Modifier.height(15.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.End
+    }
+}
+
+@Composable
+fun SearchBar() {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+    ) {
+        OutlinedTextField(
+            value = "",
+            enabled = false,
+            onValueChange = { },
+            placeholder = {
+                Text(
+                    text = "Search courses...",
+                    fontSize = 14.sp,
+                    letterSpacing = 0.25.sp
+                )
+            },
+            leadingIcon = {
+                Image(
+                    painter = painterResource(R.drawable.ic_search),
+                    contentDescription = null,
+                    modifier = Modifier.size(25.dp)
+                )
+            },
+            singleLine = true,
+            shape = RoundedCornerShape(28.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                disabledContainerColor = MaterialTheme.colorScheme.surface,
+                disabledBorderColor = Color.Transparent,
+            ),
+            modifier = Modifier
+                .weight(1f)
+                .height(56.dp)
+        )
+
+        Spacer(Modifier.width(10.dp))
+
+        IconButton(
+            onClick = {  },
+            enabled = false,
+            modifier = Modifier
+                .size(56.dp)
+                .background(
+                    color = MaterialTheme.colorScheme.surface,
+                    shape = RoundedCornerShape(28.dp)
+                )
+                .clip(RoundedCornerShape(30.dp))
         ) {
-            Text(
-                text = "По дате добавления",
-                fontSize = 14.sp,
-                lineHeight = 20.sp,
-                letterSpacing = 0.1.sp
-            )
-            Spacer(Modifier.width(5.dp))
             Image(
-                painter = painterResource(R.drawable.arrow_down_up),
-                contentDescription = null
+                painter = painterResource(R.drawable.ic_filter),
+                contentDescription = null,
+                modifier = Modifier.size(20.dp)
             )
         }
-        Spacer(Modifier.height(15.dp))
-        CourseCard()
+    }
+}
+
+@Composable
+fun FilterBar() {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.End
+    ) {
+        Text(
+            text = "По дате добавления",
+            fontSize = 14.sp,
+            lineHeight = 20.sp,
+            letterSpacing = 0.1.sp
+        )
+        Spacer(Modifier.width(5.dp))
+        Image(
+            painter = painterResource(R.drawable.arrow_down_up),
+            contentDescription = null
+        )
     }
 }
 
 @Composable
 fun CourseCard(
+    course: CourseCardDto,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -142,13 +201,14 @@ fun CourseCard(
                shape = RoundedCornerShape(16.dp)
            )
     ) {
-        CourseCardTopSection(modifier = Modifier.weight(1f))
-        CourseCardBottomSection(modifier = Modifier.weight(1f))
+        CourseCardTopSection(course, modifier = Modifier.weight(1f))
+        CourseCardBottomSection(course, modifier = Modifier.weight(1f))
     }
 }
 
 @Composable
 fun CourseCardTopSection(
+    course: CourseCardDto,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -190,7 +250,7 @@ fun CourseCardTopSection(
                     )
                     Spacer(Modifier.width(3.dp))
                     Text(
-                        text = "4.9",
+                        text = course.rate,
                         fontSize = 12.sp
                     )
                 }
@@ -202,7 +262,7 @@ fun CourseCardTopSection(
                     .height(22.dp)
             ) {
                 Text(
-                    text = "22 Мая 2024",
+                    text = course.publishDate,
                     fontSize = 12.sp,
                 )
             }
@@ -240,21 +300,22 @@ fun BlurredBox(
 
 @Composable
 fun CourseCardBottomSection(
+    course: CourseCardDto,
     modifier: Modifier = Modifier
 ) {
     Column(
         modifier = modifier
-            .padding(16.dp)
+            .padding(8.dp)
     ) {
         Text(
-            text = "Java-разработчик с нуля",
+            text = course.title,
             fontSize = 16.sp,
             lineHeight = 18.sp,
             letterSpacing = 0.15.sp
         )
         Spacer(Modifier.height(5.dp))
         Text(
-            text = "Освойте backend-разработку и программирование на Java, фреймворки Spring и Maven, работу с базами данных и API. Создайте свой собственный проект, собрав портфолио и став востребованным специалистом для любой IT компании.",
+            text = course.text,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
             fontSize = 12.sp,
@@ -267,7 +328,7 @@ fun CourseCardBottomSection(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text("999 ₽")
+            Text(text = "${course.price} ₽")
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -297,7 +358,7 @@ fun CourseCardBottomSection(
 fun HomeScreenPreview() {
     CoursesTheme {
         Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-            HomeScreen(Modifier.padding(innerPadding))
+            HomeScreen(innerPadding = innerPadding)
         }
     }
 }

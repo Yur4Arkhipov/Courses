@@ -1,4 +1,4 @@
-package com.example.courses.data
+package com.example.courses.data.model
 
 data class LoginResponseDto(
     val accessToken: String,
