@@ -18,6 +18,14 @@ class HomeScreenViewModel @Inject constructor(
     private val repository: CourseCardRepositoryImpl
 ): ViewModel() {
 
+    sealed class SortType {
+        object ByDate: SortType()
+        object ByPrice : SortType()
+    }
+
+    private val _sortType = MutableStateFlow<SortType>(SortType.ByDate)
+    val sortType: StateFlow<SortType> = _sortType.asStateFlow()
+
     private val _uiState = MutableStateFlow<UiState<List<CourseCardDto>>>(UiState.Idle)
     val uiState: StateFlow<UiState<List<CourseCardDto>>> = _uiState.asStateFlow()
 
@@ -32,9 +40,28 @@ class HomeScreenViewModel @Inject constructor(
             try {
                 val courses = repository.getCourseCards()
                 _uiState.value = UiState.Success(courses)
+                sortCourses()
             } catch (e: Exception) {
                 _uiState.value = UiState.Error("Ошибка загрузки данных: ${e.message}")
             }
+        }
+    }
+
+    fun setSortType(type: SortType) {
+        _sortType.value = type
+        sortCourses()
+    }
+
+    private fun sortCourses() {
+        when (val currentState = _uiState.value) {
+            is UiState.Success -> {
+                val sorted = when (_sortType.value) {
+                    is SortType.ByDate -> currentState.data.sortedBy { it.startDate}
+                    is SortType.ByPrice -> currentState.data.sortedBy { it.price }
+                }
+                _uiState.value = UiState.Success(sorted)
+            }
+            else -> {}
         }
     }
 }

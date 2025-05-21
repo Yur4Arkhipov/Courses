@@ -1,8 +1,8 @@
 package com.example.courses.presentation.home
 
-import android.content.res.Configuration
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -26,7 +26,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -39,15 +38,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import com.example.courses.R
 import com.example.courses.UiState
 import com.example.courses.data.model.CourseCardDto
-import com.example.courses.ui.theme.CoursesTheme
+import com.example.courses.data.model.formatDate
+import com.example.courses.presentation.navigation.SubLevelRoutes
 import com.example.courses.ui.theme.Glass
 
 
@@ -56,9 +56,12 @@ import com.example.courses.ui.theme.Glass
 fun HomeScreen(
     modifier: Modifier = Modifier,
     innerPadding: PaddingValues,
+    navController: NavController,
     viewModel: HomeScreenViewModel = hiltViewModel()
 ) {
     val state = viewModel.uiState.collectAsState().value
+    val sortType = viewModel.sortType.collectAsState().value
+
     val combinedPadding = PaddingValues(
         top = innerPadding.calculateTopPadding(),
         bottom = 0.dp,
@@ -73,7 +76,12 @@ fun HomeScreen(
     ) {
         SearchBar()
         Spacer(Modifier.height(15.dp))
-        FilterBar()
+        FilterBar(
+            sortType = sortType,
+            onValueChanged = { newSortType ->
+                viewModel.setSortType(newSortType)
+            }
+        )
         Spacer(Modifier.height(15.dp))
         when(state) {
             is UiState.Loading -> {
@@ -91,7 +99,10 @@ fun HomeScreen(
                     verticalArrangement = Arrangement.spacedBy(15.dp)
                 ) {
                     items(courses) { course ->
-                        CourseCard(course)
+                        CourseCard(
+                            course = course,
+                            navController = navController
+                        )
                     }
                 }
             }
@@ -167,14 +178,30 @@ fun SearchBar() {
 }
 
 @Composable
-fun FilterBar() {
+fun FilterBar(
+    sortType: HomeScreenViewModel.SortType,
+    onValueChanged: (HomeScreenViewModel.SortType) -> Unit,
+) {
+    val sortText = when (sortType) {
+        is HomeScreenViewModel.SortType.ByDate -> "По дате добавления"
+        is HomeScreenViewModel.SortType.ByPrice -> "По цене"
+    }
+
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable {
+                val newSortType = when (sortType) {
+                    is HomeScreenViewModel.SortType.ByDate -> HomeScreenViewModel.SortType.ByPrice
+                    is HomeScreenViewModel.SortType.ByPrice -> HomeScreenViewModel.SortType.ByDate
+                }
+                onValueChanged(newSortType)
+            },
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.End
     ) {
         Text(
-            text = "По дате добавления",
+            text = sortText,
             fontSize = 14.sp,
             lineHeight = 20.sp,
             letterSpacing = 0.1.sp
@@ -190,6 +217,7 @@ fun FilterBar() {
 @Composable
 fun CourseCard(
     course: CourseCardDto,
+    navController: NavController,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -202,7 +230,10 @@ fun CourseCard(
            )
     ) {
         CourseCardTopSection(course, modifier = Modifier.weight(1f))
-        CourseCardBottomSection(course, modifier = Modifier.weight(1f))
+        CourseCardBottomSection(
+            course = course,
+            navController = navController,
+            modifier = Modifier.weight(1f))
     }
 }
 
@@ -246,7 +277,8 @@ fun CourseCardTopSection(
                     Icon(
                         painter = painterResource(R.drawable.ic_star_fill),
                         contentDescription = null,
-                        modifier = Modifier.size(12.dp)
+                        modifier = Modifier.size(12.dp),
+                        tint = MaterialTheme.colorScheme.primary
                     )
                     Spacer(Modifier.width(3.dp))
                     Text(
@@ -262,7 +294,7 @@ fun CourseCardTopSection(
                     .height(22.dp)
             ) {
                 Text(
-                    text = course.publishDate,
+                    text = course.startDate.toString().formatDate(),
                     fontSize = 12.sp,
                 )
             }
@@ -301,6 +333,7 @@ fun BlurredBox(
 @Composable
 fun CourseCardBottomSection(
     course: CourseCardDto,
+    navController: NavController,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -330,25 +363,30 @@ fun CourseCardBottomSection(
         ) {
             Text(text = "${course.price} ₽")
             Row(
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.clickable {
+                    navController.navigate(SubLevelRoutes.CourseDetails)
+                }
             ) {
                 Text(
                     text = "Подробнее",
                     fontSize = 12.sp,
                     lineHeight = 14.sp,
-                    letterSpacing = 0.4.sp
+                    letterSpacing = 0.4.sp,
+                    color = MaterialTheme.colorScheme.primary
                 )
                 Spacer(Modifier.width(3.dp))
                 Icon(
                     painter = painterResource(R.drawable.ic_arrow_right_short_fill),
-                    contentDescription = null
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
                 )
             }
         }
     }
 }
 
-@Preview(
+/*@Preview(
     name = "Night mode home",
     showSystemUi = true,
     showBackground = true,
@@ -361,4 +399,4 @@ fun HomeScreenPreview() {
             HomeScreen(innerPadding = innerPadding)
         }
     }
-}
+}*/

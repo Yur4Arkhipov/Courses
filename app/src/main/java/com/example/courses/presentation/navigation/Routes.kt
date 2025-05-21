@@ -8,3 +8,8 @@ sealed class TopLevelRoutes() {
     @Serializable object Favorites : TopLevelRoutes()
     @Serializable object Profile : TopLevelRoutes()
 }
+
+@Serializable
+sealed class SubLevelRoutes() {
+    @Serializable object CourseDetails : SubLevelRoutes()
+}

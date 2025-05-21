@@ -10,6 +10,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.courses.R
+import com.example.courses.presentation.course_details.CourseDetailsScreen
 import com.example.courses.presentation.favorites.FavoritesScreen
 import com.example.courses.presentation.home.HomeScreen
 import com.example.courses.presentation.navigation.model.TopLevelRoute
@@ -39,9 +40,10 @@ fun Navigation() {
             startDestination = TopLevelRoutes.Home,
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable<TopLevelRoutes.Home> { HomeScreen(innerPadding = innerPadding) }
+            composable<TopLevelRoutes.Home> { HomeScreen(navController = navController, innerPadding = innerPadding) }
             composable<TopLevelRoutes.Favorites> { FavoritesScreen() }
             composable<TopLevelRoutes.Profile> { ProfileScreen() }
+            composable<SubLevelRoutes.CourseDetails> { CourseDetailsScreen() }
         }
     }
 }
