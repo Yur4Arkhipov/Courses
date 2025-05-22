@@ -6,7 +6,6 @@ import com.example.courses.UiState
 import com.example.courses.data.model.CourseCardDto
 import com.example.courses.data.repository.CourseCardRepositoryImpl
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -29,6 +28,9 @@ class HomeScreenViewModel @Inject constructor(
     private val _uiState = MutableStateFlow<UiState<List<CourseCardDto>>>(UiState.Idle)
     val uiState: StateFlow<UiState<List<CourseCardDto>>> = _uiState.asStateFlow()
 
+    private val _selectedCourse = MutableStateFlow<CourseCardDto?>(null)
+    val selectedCourse: StateFlow<CourseCardDto?> = _selectedCourse.asStateFlow()
+
     init {
         loadCourses()
     }
@@ -36,7 +38,7 @@ class HomeScreenViewModel @Inject constructor(
     private fun loadCourses() {
         _uiState.value = UiState.Loading
         viewModelScope.launch {
-            delay(2000)
+//            delay(2000)
             try {
                 val courses = repository.getCourseCards()
                 _uiState.value = UiState.Success(courses)
@@ -50,6 +52,10 @@ class HomeScreenViewModel @Inject constructor(
     fun setSortType(type: SortType) {
         _sortType.value = type
         sortCourses()
+    }
+
+    fun selectCourse(course: CourseCardDto) {
+        _selectedCourse.value = course
     }
 
     private fun sortCourses() {

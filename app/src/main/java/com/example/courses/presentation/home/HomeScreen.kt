@@ -29,6 +29,7 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -47,8 +48,10 @@ import com.example.courses.R
 import com.example.courses.UiState
 import com.example.courses.data.model.CourseCardDto
 import com.example.courses.data.model.formatDate
+import com.example.courses.presentation.favorites.FavoritesViewModel
 import com.example.courses.presentation.navigation.SubLevelRoutes
 import com.example.courses.ui.theme.Glass
+import kotlinx.coroutines.launch
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -101,7 +104,8 @@ fun HomeScreen(
                     items(courses) { course ->
                         CourseCard(
                             course = course,
-                            navController = navController
+                            navController = navController,
+                            onToggleFavorite = { viewModel.selectCourse(course) }
                         )
                     }
                 }
@@ -218,7 +222,8 @@ fun FilterBar(
 fun CourseCard(
     course: CourseCardDto,
     navController: NavController,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onToggleFavorite: (CourseCardDto) -> Unit
 ) {
     Column(
        modifier = modifier
@@ -233,15 +238,21 @@ fun CourseCard(
         CourseCardBottomSection(
             course = course,
             navController = navController,
-            modifier = Modifier.weight(1f))
+            modifier = Modifier.weight(1f),
+            onToggleFavorite = onToggleFavorite
+        )
     }
 }
 
 @Composable
 fun CourseCardTopSection(
     course: CourseCardDto,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: FavoritesViewModel = hiltViewModel()
 ) {
+    val favorites = viewModel.favoritesState.collectAsState()
+    val coroutineScope = rememberCoroutineScope()
+
     Box(
         modifier = modifier.fillMaxSize()
     ) {
@@ -256,11 +267,17 @@ fun CourseCardTopSection(
                 .align(Alignment.TopEnd)
                 .padding(8.dp)
                 .size(28.dp)
+                .clickable {
+                    coroutineScope.launch {
+                        viewModel.toggleFavorite(course)
+                    }
+                }
         ) {
             Icon(
                 painter = painterResource(R.drawable.ic_bookmark),
                 contentDescription = null,
-                modifier = Modifier.size(16.dp)
+                tint = if (course.id in favorites.value) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
+                modifier = Modifier.size(16.dp),
             )
         }
         Row(
@@ -334,6 +351,7 @@ fun BlurredBox(
 fun CourseCardBottomSection(
     course: CourseCardDto,
     navController: NavController,
+    onToggleFavorite: (CourseCardDto) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -365,8 +383,10 @@ fun CourseCardBottomSection(
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.clickable {
-                    navController.navigate(SubLevelRoutes.CourseDetails)
+                    onToggleFavorite(course)
+                    navController.navigate(SubLevelRoutes.CourseDetails(course.id))
                 }
+
             ) {
                 Text(
                     text = "Подробнее",
@@ -385,18 +405,3 @@ fun CourseCardBottomSection(
         }
     }
 }
-
-/*@Preview(
-    name = "Night mode home",
-    showSystemUi = true,
-    showBackground = true,
-    uiMode = Configuration.UI_MODE_NIGHT_YES
-)
-@Composable
-fun HomeScreenPreview() {
-    CoursesTheme {
-        Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-            HomeScreen(innerPadding = innerPadding)
-        }
-    }
-}*/
