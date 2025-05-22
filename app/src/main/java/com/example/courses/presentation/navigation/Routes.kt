@@ -13,4 +13,6 @@ sealed class TopLevelRoutes() {
 sealed class SubLevelRoutes() {
     @Serializable
     data class CourseDetails(val courseId: Int) : SubLevelRoutes()
+    @Serializable object Onboarding : SubLevelRoutes()
+    @Serializable object Login : SubLevelRoutes()
 }

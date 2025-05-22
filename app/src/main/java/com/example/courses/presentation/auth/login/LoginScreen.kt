@@ -1,5 +1,7 @@
 package com.example.courses.presentation.auth.login
 
+import android.content.Intent
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,15 +12,19 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.courses.UiState
@@ -28,9 +34,22 @@ import com.example.courses.presentation.auth.AuthViewModel
 fun LoginScreen(
     navController: NavController,
     modifier: Modifier = Modifier,
-    viewModel: AuthViewModel = hiltViewModel()
+    viewModel: AuthViewModel = hiltViewModel(),
+    onLoginSuccess: () -> Unit
 ) {
     val authState by viewModel.loginState.collectAsState()
+    val context = LocalContext.current
+
+    val emailRegex = Regex("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}\$")
+
+    val isEmailValid = emailRegex.matches(viewModel.email)
+    val isFormValid = isEmailValid && viewModel.password.isNotBlank()
+
+    LaunchedEffect(authState) {
+        if (authState is UiState.Success) {
+            onLoginSuccess()
+        }
+    }
 
     Column(
         modifier = modifier
@@ -41,11 +60,22 @@ fun LoginScreen(
     ) {
         TextField(
             value = viewModel.email,
-            onValueChange = { viewModel.email = it },
+            onValueChange = {
+                val filtered = it.filter { ch -> ch.toInt() < 128 }
+                viewModel.email = filtered
+            },
             label = { Text("Email") },
             singleLine = true,
-            modifier = Modifier.fillMaxWidth()
+            isError = viewModel.email.isNotBlank() && !isEmailValid,
+            modifier = Modifier.fillMaxWidth(),
         )
+        if (viewModel.email.isNotBlank() && !isEmailValid) {
+            Text(
+                text = "Некорректный email",
+                color = Color.Red,
+                modifier = Modifier.align(Alignment.Start)
+            )
+        }
 
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -61,7 +91,8 @@ fun LoginScreen(
 
         Button(
             onClick = { viewModel.login(email = viewModel.email, password = viewModel.password) },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            enabled = isFormValid
         ) {
             Text("Login")
         }
@@ -78,6 +109,30 @@ fun LoginScreen(
             Text(
                 text = "Забыл пароль",
                 color = Color.Green
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(20.dp),
+            modifier = Modifier.align(Alignment.CenterHorizontally)
+        ) {
+            Text(
+                text = "ВК",
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.clickable {
+                    val intent = Intent(Intent.ACTION_VIEW, "https://vk.com/".toUri())
+                    context.startActivity(intent)
+                }
+            )
+            Text(
+                text = "Одноклассники",
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.clickable {
+                    val intent = Intent(Intent.ACTION_VIEW, "https://ok.ru/".toUri())
+                    context.startActivity(intent)
+                }
             )
         }
 

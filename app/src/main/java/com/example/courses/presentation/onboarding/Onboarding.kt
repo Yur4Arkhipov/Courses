@@ -1,6 +1,5 @@
 package com.example.courses.presentation.onboarding
 
-import android.content.res.Configuration
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.horizontalScroll
@@ -20,7 +19,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -34,18 +32,17 @@ import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.courses.R
 import com.example.courses.UiState
-import com.example.courses.ui.theme.CoursesTheme
 
 @Composable
 fun OnboardingScreen(
     modifier: Modifier = Modifier,
-    viewModel: OnboardingViewModel = hiltViewModel()
+    viewModel: OnboardingViewModel = hiltViewModel(),
+    onNextClick: () -> Unit
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -67,7 +64,7 @@ fun OnboardingScreen(
         Spacer(modifier = Modifier.weight(1f))
 
         Button(
-            onClick = {},
+            onClick = { onNextClick() },
             modifier.fillMaxWidth().padding(horizontal = 20.dp)
         ) {
             Text("Продолжить")
@@ -141,6 +138,7 @@ fun CoursesFlowCard(viewModel: OnboardingViewModel) {
     }
 }
 
+/*
 @Preview(
     name = "Night mode onboarding",
     showSystemUi = true,
@@ -154,4 +152,4 @@ fun OnboardingScreenPreview() {
             OnboardingScreen(Modifier.padding(innerPadding))
         }
     }
-}
+}*/
